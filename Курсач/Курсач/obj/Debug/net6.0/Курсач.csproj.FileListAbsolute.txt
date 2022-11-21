@@ -1,0 +1,15 @@
+E:\Курсач\Курсач\obj\Debug\net6.0\Курсач.csproj.AssemblyReference.cache
+E:\Курсач\Курсач\obj\Debug\net6.0\Курсач.GeneratedMSBuildEditorConfig.editorconfig
+E:\Курсач\Курсач\obj\Debug\net6.0\Курсач.AssemblyInfoInputs.cache
+E:\Курсач\Курсач\obj\Debug\net6.0\Курсач.AssemblyInfo.cs
+E:\Курсач\Курсач\obj\Debug\net6.0\Курсач.csproj.CoreCompileInputs.cache
+E:\Курсач\Курсач\bin\Debug\net6.0\Курсач.exe
+E:\Курсач\Курсач\bin\Debug\net6.0\Курсач.deps.json
+E:\Курсач\Курсач\bin\Debug\net6.0\Курсач.runtimeconfig.json
+E:\Курсач\Курсач\bin\Debug\net6.0\Курсач.dll
+E:\Курсач\Курсач\bin\Debug\net6.0\Курсач.pdb
+E:\Курсач\Курсач\obj\Debug\net6.0\Курсач.dll
+E:\Курсач\Курсач\obj\Debug\net6.0\refint\Курсач.dll
+E:\Курсач\Курсач\obj\Debug\net6.0\Курсач.pdb
+E:\Курсач\Курсач\obj\Debug\net6.0\Курсач.genruntimeconfig.cache
+E:\Курсач\Курсач\obj\Debug\net6.0\ref\Курсач.dll
