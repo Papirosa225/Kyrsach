@@ -2,9 +2,12 @@
 //	Сведения об игроках хоккейной команды включают: Ф.И.О.игрока, дату рождения, количество сыгранных матчей
 //	число заброшенных шайб, количество голевых передач, количество штрафных минут.
 //	Индивидуальное задание: вывести 6 лучших игроков(голы+передачи) с указанием их результативности.
+using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 
-const string path= @"E:\Курсач\Data.txt";
+const string path= @"E:\Курсач\Курсач\autorizationData.txt";
+const string playerPath = @"E:\Курсач\Курсач\playersData.txt";
 static string HashPassword(string password)
 {
     if (password == null)  throw new ArgumentNullException("password");
@@ -44,6 +47,13 @@ static void ShowInfo(string[,] FormedData,int Count)
         Console.WriteLine($"Логин:{FormedData[i, 0]}\nПароль:{FormedData[i, 1]}\nПрава:{FormedData[i, 2]}\n");
     }
 }
+static void ShowListInfo(List<Player> players)
+{
+    foreach (var player in players)
+    {
+        Console.WriteLine($"\nФИО {player.name}\nДата рождения {player.birth}\nКол-во матчей {player.matchCount}\nКол-во передач {player.assistCount}\nКол-во штрафных минут {player.penaltyMinutes}\nКол-во голов {player.goalCount}\n");
+    }
+}
 static void ArrayResize(int AccountCount, ref string[,] OldArray,int mode )
 {
     if (mode == -1)
@@ -75,17 +85,7 @@ static void ArrayResize(int AccountCount, ref string[,] OldArray,int mode )
         return;
     }
 }
-class Person
-{
-    string? FullName { get; set; }
-    int MatchCount  { get; set; }
-
-    int Shaiba { get; set; }
-    int PenaltyTime { get; set; }
-};
-
-
-bool HaveRole = false;
+bool HaveRole=false;
 string[] AllInfo = File.ReadAllLines(path);
 string[,]? FormedData = new string[AllInfo.Length,3];
 int AccountCount = AllInfo.Length;
@@ -94,7 +94,26 @@ for (int i = 0; i < AllInfo.Length; i++)
         string[] Temporary = AllInfo[i].Split(' ').ToArray();
         for (int j = 0; j < 3; j++)  FormedData[i, j] = Temporary[j];
     }
-Console.WriteLine("Если вы зарегистрированы в базе нажмите 1,иначе 0");
+
+
+Console.WriteLine("Если вы зарегистрированы в базе нажмите 1,иначе 0");\
+
+string[] playerInfo = File.ReadAllLines(playerPath);
+List<Player> players = new List<Player>();
+for (int i = 0,j=0; i < playerInfo.Length; i++)
+{
+    Player player = new Player();
+    string[] Temporary = playerInfo[i].Split(' ').ToArray();
+
+        player.name = Temporary[j];
+        player.birth = Temporary[++j];
+        player.matchCount = int.Parse(Temporary[++j]);
+        player.goalCount = int.Parse(Temporary[++j]);
+        player.assistCount = int.Parse(Temporary[++j]);
+        player.penaltyMinutes = int.Parse(Temporary[++j]);
+        players.Add(player);
+        j = 0;
+}
 bool AlreadyRegistered=Convert.ToBoolean(Console.ReadLine());
 if (AlreadyRegistered)
 {
@@ -196,7 +215,6 @@ if (HaveRole)
                                     bool Exit1=true;
                                     while (Exit1)
                                     {
-
                                         ShowInfo(FormedData, AllInfo.Length);
                                         Console.WriteLine("Введите номер учётной записи для редактирования");
                                         int AccountNumber = Convert.ToInt32(Console.ReadLine());
@@ -282,13 +300,177 @@ if (HaveRole)
                 };
             case 2:
                 {
-                    Console.WriteLine("Работа с файлами");
+                    Console.WriteLine("1-Создать файл\n2-Открыть файл\n3-Удалить файл");
+                    switch (int.Parse(Console.ReadLine()))
+                    {
+                        case 1:
+                            {
+                                Console.WriteLine("Введите название файл");
+                                File.Create(@$"E:\Курсач\Курсач\{Console.ReadLine()}.txt");
+                                break;
+                            }
+                        case 2:
+                            {
+                                Console.WriteLine("Введите имя файла:");
+                                File.Open(@$"E:\Курсач\Курсач\{Console.ReadLine()}.txt", FileMode.Open);
+                                break;
+                            }
+                        case 3:
+                            {
+                                Console.WriteLine("Введите имя файла:");
+                                File.Delete(@$"E:\Курсач\Курсач\{Console.ReadLine()}.txt");
+                                break;
+                            }
+                        default:
+                            Console.WriteLine("Неправильное число");
+                            break;
+                    }
                     break;
                 };
                 case 3:
                 {
-                    Console.WriteLine("1-Посмотреть все данные\n2-Добавить запись\n3-Удалить запись\n4-Редактировать запись\n5-Выполнить задачу\n6-Поиск данных\n7-Сортировка");
+                    bool Exit=true;
+                    while(Exit)
+                    { 
+                    Console.WriteLine("1 -Посмотреть все данные\n2-Добавить запись\n3-Удалить запись\n4-Редактировать запись\n5-Выполнить задачу\n6-Поиск данных\n7-Сортировка по кол-ву матчей\n8-Выход");
+                        switch (int.Parse(Console.ReadLine()))
+                        {
+                            case 1:
+                                {
+                                    ShowListInfo(players);
+                                    break;
+                                }
+                            case 2:
+                                {
+                                    Player player = new Player();
+                                    Console.WriteLine("Введите имя");
+                                    player.name = Console.ReadLine();
+                                    Console.WriteLine("Введите дату рождения");
+                                    player.birth = Console.ReadLine();
+                                    Console.WriteLine("Введите кол-во матчей");
+                                    player.matchCount = int.Parse(Console.ReadLine());
+                                    Console.WriteLine("Введите кол-во голов");
+                                    player.goalCount = int.Parse(Console.ReadLine());
+                                    Console.WriteLine("Введите кол-во штрафных минут");
+                                    player.penaltyMinutes = int.Parse(Console.ReadLine());
+                                    Console.WriteLine("Введите кол-во передач");
+                                    player.assistCount = int.Parse(Console.ReadLine());
+                                    players.Add(player);
+                                    break;
+                                }
+                            case 3:
+                                {
+                                    Console.WriteLine("Введите номер игрока для удаления");                                    
+                                    ShowListInfo(players);
+                                    players.Remove(players[int.Parse(Console.ReadLine())]);
+                                    break;
+                                }
+                            case 4:
+                                {
+                                    bool Exit1 = true;
+                                    Console.WriteLine("Введите номер игрока для редактирования");
+                                    ShowListInfo(players);
+                                    int playerNumber = int.Parse(Console.ReadLine());
+                                    while(Exit1)
+                                    {
+                                        Console.WriteLine("1-ФИО\n2-Кол-во игр\n3-Кол-во голов\n4-Кол-во голевых передач\n5-Кол-во штрафных минут\n6-Дата рождения\n7-Выход");
+                                        switch (int.Parse(Console.ReadLine()))
+                                        {
+                                            case 1:
+                                                {
+                                                    Console.WriteLine("Введите имя");
+                                                    players[playerNumber].name = Console.ReadLine();
+                                                    break;
+                                                }
+                                            case 2:
+                                                {
+                                                    Console.WriteLine("Введите кол-во матчей");
+                                                    players[playerNumber].matchCount = int.Parse(Console.ReadLine());
+                                                    break;
+                                                }
+                                            case 3:
+                                                {
+                                                    Console.WriteLine("Введите голов");
+                                                    players[playerNumber].goalCount = int.Parse(Console.ReadLine());
+                                                    break;
+                                                }
+                                            case 4:
+                                                {
+                                                    Console.WriteLine("Введите передач");
+                                                    players[playerNumber].assistCount = int.Parse(Console.ReadLine());
+                                                    break;
+                                                }
+                                            case 5:
+                                                {
+                                                    Console.WriteLine("Введите кол-во штрафных минут");
+                                                    players[playerNumber].penaltyMinutes = int.Parse(Console.ReadLine());
+                                                    break;
+                                                }
+                                            case 6:
+                                                {
+                                                    Console.WriteLine("Введите дату рождения");
+                                                    players[playerNumber].birth = Console.ReadLine();
+                                                    break;
+                                                }
+                                            case 7:
+                                                {
+                                                    Exit1=false;
+                                                    break;
+                                                }
+                                            default:
+                                                Console.WriteLine("Неправильная цифра");
+                                                break;
+                                        }
+                                        
+                                    }
+                                    break;
 
+                                }
+                            case 5:
+                                {
+                                    var sortedPlayers = players.OrderBy(players => players.goalCount+players.assistCount);
+                                    foreach (var player in sortedPlayers)
+                                    {
+                                        Console.WriteLine($"ФИО {player.name}\nДата рождения {player.birth}\nКол-во матчей {player.goalCount}\nКол-во передач {player.assistCount}\n");
+                                        Console.WriteLine($"Кол-во штрафных минут {player.penaltyMinutes}\nКол-во голов {player.goalCount}\n");
+                                        break;
+                                    }
+                                    break;
+                                }
+                            case 6:
+                                {
+                                    Console.WriteLine($"Введите кол-во игр");
+                                    int playerCount=int.Parse(Console.ReadLine());
+                                    foreach (var player in players)
+                                    {
+                                        if (playerCount==player.matchCount)
+                                        {
+                                            Console.WriteLine($"ФИО {player.name}\nДата рождения {player.birth}\nКол-во матчей {player.goalCount}\nКол-во передач {player.assistCount}\n");
+                                            Console.WriteLine($"Кол-во штрафных минут {player.penaltyMinutes}\nКол-во голов {player.goalCount}\n");
+                                            break;
+                                        }
+                                    }
+                                    break;
+                                }
+                            case 7:
+                                {
+                                    var sortedPlayers = players.OrderByDescending(players => players.goalCount);
+                                    foreach (var player in sortedPlayers)
+                                    {
+                                        Console.WriteLine($"ФИО {player.name}\nДата рождения {player.birth}\nКол-во матчей {player.goalCount}\nКол-во передач {player.assistCount}\n");
+                                        Console.WriteLine($"Кол-во штрафных минут {player.penaltyMinutes}\nКол-во голов {player.goalCount}\n");
+                                    }
+                                    break;
+                                }
+                            case 8:
+                                {
+                                    Exit = false;
+                                    break;
+                                }
+                            default:
+                                break;
+                        }
+                    }
                     break;
                 }
             default:
@@ -297,3 +479,78 @@ if (HaveRole)
         }
     }    
 }
+else
+{
+    bool Exit2 = true;
+    while (Exit2)
+    {
+        Console.WriteLine("1-Вывести всех\n2-Выполнить задачу\n3-Сортировка по кол-ву матчей\n4-Поиск данных\n5-Выход");
+        switch (int.Parse(Console.ReadLine()))
+        {
+            case 1:
+                {
+                    ShowListInfo(players);
+                    break;
+                }
+            case 2:
+                {
+                    var sortedPlayers = players.OrderByDescending(players => players.goalCount + players.assistCount);
+                    foreach (var player in sortedPlayers)
+                    {
+                        Console.WriteLine($"ФИО {player.name}\nДата рождения {player.birth}\nКол-во матчей {player.goalCount}\nКол-во передач {player.assistCount}\n");
+                        Console.WriteLine($"Кол-во штрафных минут {player.penaltyMinutes}\nКол-во голов {player.goalCount}\n");
+                        break;
+                    }
+                    break;
+                }
+            case 3:
+                {
+                    var sortedPlayers = players.OrderByDescending(players => players.goalCount);
+                    foreach (var player in sortedPlayers)
+                    {
+                        Console.WriteLine($"ФИО {player.name}\nДата рождения {player.birth}\nКол-во матчей {player.goalCount}\nКол-во передач {player.assistCount}\n");
+                        Console.WriteLine($"Кол-во штрафных минут {player.penaltyMinutes}\nКол-во голов {player.goalCount}\n");
+                    }
+                    break;
+                }
+            case 4:
+                {
+                    Console.WriteLine($"Введите кол-во игр");
+                    int playerCount = int.Parse(Console.ReadLine());
+                
+                    foreach (var player in players)
+                    {
+                        if (playerCount == player.matchCount)
+                        {
+                            Console.WriteLine($"ФИО {player.name}\nДата рождения {player.birth}\nКол-во матчей {player.goalCount}\nКол-во передач {player.assistCount}\n");
+                            Console.WriteLine($"Кол-во штрафных минут {player.penaltyMinutes}\nКол-во голов {player.goalCount}\n");
+                            break;
+                        }
+                    }
+                    break;
+                }
+            case 5:
+                {
+                    Exit2 = false;
+                    break;
+                }
+            default:
+                Console.WriteLine($"Неправильное число");
+                break;
+        }
+    }
+    File.WriteAllText(playerPath, "");
+    foreach (var player in players)
+    {
+        File.AppendAllText(playerPath, $"{player.name} {player.birth} {player.matchCount} {player.goalCount} {player.assistCount} {player.penaltyMinutes}\n");
+    }
+}
+class Player
+{
+    public string? name;
+    public string? birth;
+    public int matchCount;
+    public int goalCount;
+    public int assistCount;
+    public int penaltyMinutes;
+};
