@@ -2,15 +2,29 @@
 //	Сведения об игроках хоккейной команды включают: Ф.И.О.игрока, дату рождения, количество сыгранных матчей
 //	число заброшенных шайб, количество голевых передач, количество штрафных минут.
 //	Индивидуальное задание: вывести 6 лучших игроков(голы+передачи) с указанием их результативности.
-using System.Numerics;
-using System.Runtime.CompilerServices;
+
 using System.Security.Cryptography;
 
-const string path= @"E:\Курсач\Курсач\autorizationData.txt";
+const string autorizationPath= @"E:\Курсач\Курсач\autorizationData.txt";
 const string playerPath = @"E:\Курсач\Курсач\playersData.txt";
+static void ShowSortedData(IOrderedEnumerable<Player> sortedPlayers)
+{
+    foreach (var player in sortedPlayers)
+    {
+        player.ShowPlayer();
+        break;
+    }
+}
+static void ShowAccountInfo(string[,] FormedData,int Count)
+{
+    for (int i = 0; i < Count; i++)
+    {
+        Console.WriteLine($"Логин:{FormedData[i, 0]}\nПароль:{FormedData[i, 1]}\nПрава:{FormedData[i, 2]}\n");
+    }
+}
 static string HashPassword(string password)
 {
-    if (password == null)  throw new ArgumentNullException("password");
+    if (password == null) throw new ArgumentNullException("password");
     byte[] salt;
     byte[] buffer2;
     using (Rfc2898DeriveBytes bytes = new Rfc2898DeriveBytes(password, 0x10, 0x3e8))
@@ -40,18 +54,11 @@ static bool VerifyHashedPassword(string hashedPassword, string password)
     }
     return buffer3.SequenceEqual(buffer4);
 }
-static void ShowInfo(string[,] FormedData,int Count)
-{
-    for (int i = 0; i < Count; i++)
-    {
-        Console.WriteLine($"Логин:{FormedData[i, 0]}\nПароль:{FormedData[i, 1]}\nПрава:{FormedData[i, 2]}\n");
-    }
-}
 static void ShowListInfo(List<Player> players)
 {
     foreach (var player in players)
     {
-        Console.WriteLine($"\nФИО {player.name}\nДата рождения {player.birth}\nКол-во матчей {player.matchCount}\nКол-во передач {player.assistCount}\nКол-во штрафных минут {player.penaltyMinutes}\nКол-во голов {player.goalCount}\n");
+        player.ShowPlayer();
     }
 }
 static void ArrayResize(int AccountCount, ref string[,] OldArray,int mode )
@@ -85,28 +92,83 @@ static void ArrayResize(int AccountCount, ref string[,] OldArray,int mode )
         return;
     }
 }
-bool HaveRole=false;
-string[] AllInfo = File.ReadAllLines(path);
+static bool Registration(string[,]? FormedData,int count)
+{
+    Console.WriteLine("Если вы зарегистрированы в базе нажмите 1");
+    if (Console.ReadLine() == "1")
+    {
+        while (true)
+        {
+            Console.WriteLine("Введите логин: ");
+            string? Login = Console.ReadLine();
+            for (int i = 0; i < count &&  Login != null; i++)
+            {
+                if (FormedData[i, 0] == Login)
+                {
+                    Console.WriteLine("Логин найден в системе\n");
+                    while (true)
+                    {
+                        Console.WriteLine("Введите пароль: ");
+                        string? Passwd = Console.ReadLine();
+                        if (VerifyHashedPassword(FormedData[i, 1], Passwd) && Passwd != null)
+                        {
+                            return true;
+                        }
+                        Console.WriteLine("Неправильный пароль,попробуйте снова");
+                    }
+                }
+            }
+            Console.WriteLine("В системе нет данного пользователя,попробуйте другой логин");
+        }
+    }
+    else
+    {
+        Console.WriteLine("Для регистрации введите логин");
+        string? DataToFile;
+        DataToFile = Console.ReadLine() + ' ';
+        Console.WriteLine("Введите пароль");
+        DataToFile += HashPassword(Console.ReadLine()) + ' ' + 0 + '\n';
+        File.AppendAllText(autorizationPath, DataToFile);
+        return false;
+    }
+}
+static void SetPlayerInfo(ref List<Player> players)
+{
+    Console.Clear();
+    Player player = new Player();
+    Console.WriteLine("Введите имя");
+    player.name = Console.ReadLine();
+    Console.WriteLine("Введите дату рождения");
+    while (!DateOnly.TryParse(Console.ReadLine(), out player.birth)) ;
+    Console.WriteLine("Введите кол-во матчей");
+    player.MatchCount = 0;
+    Console.WriteLine("Введите кол-во голов");
+    player.GoalCount = 0;
+    Console.WriteLine("Введите кол-во штрафных минут");
+    player.PenaltyMinutes = 0;
+    Console.WriteLine("Введите кол-во передач");
+    player.AssistCount = 0;
+    players.Add(player);
+    Console.Clear();
+}
+
+
+string[] AllInfo = File.ReadAllLines(autorizationPath);
 string[,]? FormedData = new string[AllInfo.Length,3];
-int AccountCount = AllInfo.Length;
+int accountCount = AllInfo.Length;
 for (int i = 0; i < AllInfo.Length; i++)
     {
         string[] Temporary = AllInfo[i].Split(' ').ToArray();
         for (int j = 0; j < 3; j++)  FormedData[i, j] = Temporary[j];
     }
-
-
-Console.WriteLine("Если вы зарегистрированы в базе нажмите 1,иначе 0");\
-
 string[] playerInfo = File.ReadAllLines(playerPath);
 List<Player> players = new List<Player>();
 for (int i = 0,j=0; i < playerInfo.Length; i++)
 {
     Player player = new Player();
     string[] Temporary = playerInfo[i].Split(' ').ToArray();
-
         player.name = Temporary[j];
-        player.birth = Temporary[++j];
+        player.birth = DateOnly.Parse(Temporary[++j]);
         player.matchCount = int.Parse(Temporary[++j]);
         player.goalCount = int.Parse(Temporary[++j]);
         player.assistCount = int.Parse(Temporary[++j]);
@@ -114,51 +176,14 @@ for (int i = 0,j=0; i < playerInfo.Length; i++)
         players.Add(player);
         j = 0;
 }
-bool AlreadyRegistered=Convert.ToBoolean(Console.ReadLine());
-if (AlreadyRegistered)
+
+if (Registration(FormedData,AllInfo.Length))
 {
-    bool AlreadyFind = false;
-    while (!AlreadyFind)
+    bool Exitt = true;
+    while (Exitt)
     {
-        Console.WriteLine("Введите логин: ");
-        string? Login = Console.ReadLine();
-        for (int i = 0; i < AllInfo.Length && !AlreadyFind && Login!=null; i++)
-        {
-            if (FormedData[i, 0] == Login)
-            {
-                Console.WriteLine("Логин найден в системе\n");
-                while (true)
-                {
-                    Console.WriteLine("Введите пароль: ");
-                    string? Passwd = Console.ReadLine();
-                    if (VerifyHashedPassword(FormedData[i, 1], Passwd) && Passwd!=null)
-                    {
-                        Console.WriteLine("Вы вошли в систему");
-                        AlreadyFind = true;
-                        HaveRole = true;
-                        break;
-                    }
-                    Console.WriteLine("Неправильный пароль,попробуйте снова");
-                }
-            }
-        }
-        if (!AlreadyFind) Console.WriteLine("В системе нет данного пользователя,попробуйте другой логин");
-    }
-}
-else
-{
-    Console.WriteLine("Для регистрации введите логин");
-    string? DataToFile;
-    DataToFile =Console.ReadLine()+' ';
-    Console.WriteLine("Введите пароль");
-    DataToFile +=HashPassword(Console.ReadLine())+' '+0+ '\n';
-    File.AppendAllText(path, DataToFile);
-}
-if (HaveRole)
-{
-    Console.WriteLine("Функции администрации\n1-Управление учётными записями\n2-Управление файлами\n3-Работа в данными");
-    while (true)
-    {        
+        Console.Clear();
+        Console.WriteLine("Функции администрации\n1-Управление учётными записями\n2-Управление файлами\n3-Работа в данными\n4-Выход из программы");
         switch (Convert.ToInt32(Console.ReadLine()))
         {
             case 1:
@@ -171,7 +196,7 @@ if (HaveRole)
                         {
                             case 1:
                                 {
-                                    ShowInfo(FormedData, AccountCount);
+                                    ShowAccountInfo(FormedData, accountCount);
                                     break;
                                 }
                             case 2:
@@ -189,13 +214,13 @@ if (HaveRole)
                                                     string? DataToFile = "";
                                                     Console.WriteLine("Введите пароль");
                                                     string? Passwd = Console.ReadLine();
-                                                    DataToFile += Login + ' ' + HashPassword(Passwd) + ' ' + 0 + '\n';
-                                                    File.AppendAllText(path, DataToFile);
-                                                    AccountCount++;
-                                                    ArrayResize(AccountCount, ref FormedData,-1);
-                                                    FormedData[AccountCount-1, 0] = Login;
-                                                    FormedData[AccountCount-1, 1] = HashPassword(Passwd);
-                                                    FormedData[AccountCount-1, 2] = "0";
+                                                    DataToFile += Login + ' ' + Passwd.GetHashCode() + ' ' + 0 + '\n';
+                                                    File.AppendAllText(autorizationPath, DataToFile);
+                                                    accountCount++;
+                                                    ArrayResize(accountCount, ref FormedData,-1);
+                                                    FormedData[accountCount-1, 0] = Login;
+                                                    FormedData[accountCount-1, 1] = Passwd.GetHashCode().ToString();
+                                                    FormedData[accountCount-1, 2] = "0";
                                                     break;
                                                 }
                                             case 2:
@@ -215,7 +240,7 @@ if (HaveRole)
                                     bool Exit1=true;
                                     while (Exit1)
                                     {
-                                        ShowInfo(FormedData, AllInfo.Length);
+                                        ShowAccountInfo(FormedData, AllInfo.Length);
                                         Console.WriteLine("Введите номер учётной записи для редактирования");
                                         int AccountNumber = Convert.ToInt32(Console.ReadLine());
                                         Console.WriteLine("1-Изменить логин\n2-Изменить пароль\n3-Изменить права\n4-вернуться обратно");
@@ -230,7 +255,7 @@ if (HaveRole)
                                             case 2:
                                                 {
                                                     Console.WriteLine("Введите новый пароль: ");
-                                                    FormedData[AccountNumber, 1] = HashPassword(Console.ReadLine());
+                                                    FormedData[AccountNumber, 1] = Console.ReadLine().GetHashCode().ToString();
                                                     break;                                                    
                                                 }
                                             case 3:
@@ -262,17 +287,17 @@ if (HaveRole)
                                         {
                                             case 1:
                                                 {
-                                                    ShowInfo(FormedData, AccountCount);
+                                                    ShowAccountInfo(FormedData, accountCount);
                                                     Console.WriteLine("Выбирите учётную запись для удаления");
                                                     int AccountDelete=Convert.ToInt32(Console.ReadLine());
-                                                    ArrayResize(AccountCount,ref FormedData,AccountDelete-1);
-                                                    AccountCount--;
+                                                    ArrayResize(accountCount,ref FormedData,AccountDelete-1);
+                                                    accountCount--;
                                                     string? DataToFile;
-                                                    File.WriteAllText(path, DataToFile = FormedData[0, 0] + ' ' + FormedData[0, 1] + ' ' + FormedData[0, 2] + '\n');
-                                                    for (int i = 1; i < AccountCount; i++)
+                                                    File.WriteAllText(autorizationPath, DataToFile = FormedData[0, 0] + ' ' + FormedData[0, 1] + ' ' + FormedData[0, 2] + '\n');
+                                                    for (int i = 1; i < accountCount; i++)
                                                     {
                                                         DataToFile = FormedData[i, 0] + ' ' + FormedData[i, 1] + ' ' + FormedData[i, 2] + '\n';
-                                                        File.AppendAllText(path, DataToFile);
+                                                        File.AppendAllText(autorizationPath, DataToFile);
                                                     }
                                                     break;
                                                 }
@@ -293,6 +318,7 @@ if (HaveRole)
                                     break;
                                 }
                             default:
+                                Console.WriteLine("Выбирите пункт меню");
                                 break;
                         }
                     }                    
@@ -329,10 +355,12 @@ if (HaveRole)
                 };
                 case 3:
                 {
-                    bool Exit=true;
+                    Console.Clear();
+                    bool Exit =true;
                     while(Exit)
-                    { 
-                    Console.WriteLine("1 -Посмотреть все данные\n2-Добавить запись\n3-Удалить запись\n4-Редактировать запись\n5-Выполнить задачу\n6-Поиск данных\n7-Сортировка по кол-ву матчей\n8-Выход");
+                    {
+                        
+                        Console.WriteLine("1-Посмотреть все данные\n2-Добавить запись\n3-Удалить запись\n4-Редактировать запись\n5-Выполнить задачу\n6-Поиск данных\n7-Сортировка по кол-ву матчей\n8-Выход");
                         switch (int.Parse(Console.ReadLine()))
                         {
                             case 1:
@@ -342,24 +370,12 @@ if (HaveRole)
                                 }
                             case 2:
                                 {
-                                    Player player = new Player();
-                                    Console.WriteLine("Введите имя");
-                                    player.name = Console.ReadLine();
-                                    Console.WriteLine("Введите дату рождения");
-                                    player.birth = Console.ReadLine();
-                                    Console.WriteLine("Введите кол-во матчей");
-                                    player.matchCount = int.Parse(Console.ReadLine());
-                                    Console.WriteLine("Введите кол-во голов");
-                                    player.goalCount = int.Parse(Console.ReadLine());
-                                    Console.WriteLine("Введите кол-во штрафных минут");
-                                    player.penaltyMinutes = int.Parse(Console.ReadLine());
-                                    Console.WriteLine("Введите кол-во передач");
-                                    player.assistCount = int.Parse(Console.ReadLine());
-                                    players.Add(player);
+                                    SetPlayerInfo(ref players);
                                     break;
                                 }
                             case 3:
                                 {
+                                    Console.Clear();
                                     Console.WriteLine("Введите номер игрока для удаления");                                    
                                     ShowListInfo(players);
                                     players.Remove(players[int.Parse(Console.ReadLine())]);
@@ -368,6 +384,7 @@ if (HaveRole)
                             case 4:
                                 {
                                     bool Exit1 = true;
+                                    Console.Clear();
                                     Console.WriteLine("Введите номер игрока для редактирования");
                                     ShowListInfo(players);
                                     int playerNumber = int.Parse(Console.ReadLine());
@@ -385,31 +402,31 @@ if (HaveRole)
                                             case 2:
                                                 {
                                                     Console.WriteLine("Введите кол-во матчей");
-                                                    players[playerNumber].matchCount = int.Parse(Console.ReadLine());
+                                                    players[playerNumber].MatchCount = 0;
                                                     break;
                                                 }
                                             case 3:
                                                 {
                                                     Console.WriteLine("Введите голов");
-                                                    players[playerNumber].goalCount = int.Parse(Console.ReadLine());
+                                                    players[playerNumber].GoalCount = 0;
                                                     break;
                                                 }
                                             case 4:
                                                 {
                                                     Console.WriteLine("Введите передач");
-                                                    players[playerNumber].assistCount = int.Parse(Console.ReadLine());
+                                                    players[playerNumber].AssistCount = 0;
                                                     break;
                                                 }
                                             case 5:
                                                 {
                                                     Console.WriteLine("Введите кол-во штрафных минут");
-                                                    players[playerNumber].penaltyMinutes = int.Parse(Console.ReadLine());
+                                                    players[playerNumber].PenaltyMinutes = 0;
                                                     break;
                                                 }
                                             case 6:
                                                 {
                                                     Console.WriteLine("Введите дату рождения");
-                                                    players[playerNumber].birth = Console.ReadLine();
+                                                    while(!DateOnly.TryParse(Console.ReadLine(),out players[playerNumber].birth));
                                                     break;
                                                 }
                                             case 7:
@@ -428,26 +445,117 @@ if (HaveRole)
                                 }
                             case 5:
                                 {
-                                    var sortedPlayers = players.OrderBy(players => players.goalCount+players.assistCount);
+                                    var sortedPlayers = players.OrderByDescending(players => players.goalCount+players.assistCount);
+                                    int count = 0;
                                     foreach (var player in sortedPlayers)
                                     {
-                                        Console.WriteLine($"ФИО {player.name}\nДата рождения {player.birth}\nКол-во матчей {player.goalCount}\nКол-во передач {player.assistCount}\n");
-                                        Console.WriteLine($"Кол-во штрафных минут {player.penaltyMinutes}\nКол-во голов {player.goalCount}\n");
-                                        break;
+                                        player.ShowPlayer();
+                                        count++;
+                                        if (count == 6) break;
                                     }
                                     break;
                                 }
                             case 6:
                                 {
-                                    Console.WriteLine($"Введите кол-во игр");
-                                    int playerCount=int.Parse(Console.ReadLine());
-                                    foreach (var player in players)
+                                    bool Exit11 = true;
+                                    while (Exit11)
                                     {
-                                        if (playerCount==player.matchCount)
+                                        Console.Clear();
+                                        Console.WriteLine("1-Поиск по ФИО\n2-Поиск по кол-ву игр\n3-Поиск по кол-ву голов\n4-Поиск по помощей\n5-Кол-во штрафных минут\n6-Поиск по дате");
+                                        switch (int.Parse(Console.ReadLine()))
                                         {
-                                            Console.WriteLine($"ФИО {player.name}\nДата рождения {player.birth}\nКол-во матчей {player.goalCount}\nКол-во передач {player.assistCount}\n");
-                                            Console.WriteLine($"Кол-во штрафных минут {player.penaltyMinutes}\nКол-во голов {player.goalCount}\n");
-                                            break;
+                                            case 1:
+                                                {
+                                                    Console.Clear();
+                                                    Console.WriteLine($"Введите ФИО");
+                                                    string playerName = Console.ReadLine();
+                                                    foreach (var player in players)
+                                                    {
+                                                        if (playerName == player.name)
+                                                        {
+                                                            player.ShowPlayer();
+                                                            break;
+                                                        }
+                                                    }
+                                                    break;
+                                                }
+                                            case 2:
+                                                {
+                                                    Console.Clear();
+                                                    Console.WriteLine($"Введите кол-во игр");
+                                                    int playerCount = int.Parse(Console.ReadLine());
+                                                    foreach (var player in players)
+                                                    {
+                                                        if (playerCount == player.matchCount)
+                                                        {
+                                                            player.ShowPlayer();
+                                                            break;
+                                                        }
+                                                    }
+                                                    break;
+                                                }
+                                            case 3:
+                                                {
+                                                    Console.Clear();
+                                                    Console.WriteLine($"Введите кол-во голов");
+                                                    int playerGoal = int.Parse(Console.ReadLine());
+                                                    foreach (var player in players)
+                                                    {
+                                                        if (playerGoal == player.goalCount)
+                                                        {
+                                                            player.ShowPlayer();
+                                                            break;
+                                                        }
+                                                    }
+                                                    break;
+                                                }
+                                            case 4:
+                                                {
+                                                    Console.Clear();
+                                                    Console.WriteLine($"Введите кол-во помощей");
+                                                    int playerAssist = int.Parse(Console.ReadLine());
+                                                    foreach (var player in players)
+                                                    {
+                                                        if (playerAssist == player.assistCount)
+                                                        {
+                                                            player.ShowPlayer();
+                                                            break;
+                                                        }
+                                                    }
+                                                    break;
+                                                }
+                                            case 5:
+                                                {
+                                                    Console.Clear();
+                                                    Console.WriteLine($"Введите кол-во игр");
+                                                    int playerCount = int.Parse(Console.ReadLine());
+                                                    foreach (var player in players)
+                                                    {
+                                                        if (playerCount == player.matchCount)
+                                                        {
+                                                            player.ShowPlayer();
+                                                            break;
+                                                        }
+                                                    }
+                                                    break;
+                                                }
+                                            case 6:
+                                                {
+                                                    Console.Clear();
+                                                    Console.WriteLine($"Введите дату");
+                                                    DateOnly playerCount = DateOnly.Parse(Console.ReadLine());
+                                                    foreach (var player in players)
+                                                    {
+                                                        if (playerCount == player.birth)
+                                                        {
+                                                            player.ShowPlayer();
+                                                            break;
+                                                        }
+                                                    }
+                                                    break;
+                                                }
+                                            default:
+                                                break;
                                         }
                                     }
                                     break;
@@ -455,11 +563,7 @@ if (HaveRole)
                             case 7:
                                 {
                                     var sortedPlayers = players.OrderByDescending(players => players.goalCount);
-                                    foreach (var player in sortedPlayers)
-                                    {
-                                        Console.WriteLine($"ФИО {player.name}\nДата рождения {player.birth}\nКол-во матчей {player.goalCount}\nКол-во передач {player.assistCount}\n");
-                                        Console.WriteLine($"Кол-во штрафных минут {player.penaltyMinutes}\nКол-во голов {player.goalCount}\n");
-                                    }
+                                    ShowSortedData(sortedPlayers);
                                     break;
                                 }
                             case 8:
@@ -473,17 +577,28 @@ if (HaveRole)
                     }
                     break;
                 }
+            case 4:
+                {
+                    Exitt = false;
+                    break;
+                }
             default:
                 Console.WriteLine("Введите подходящее число");
                 break;
         }
-    }    
+    }
+    File.WriteAllText(playerPath, "");
+    foreach (var player in players)
+    {
+        File.AppendAllText(playerPath, $"{player.name} {player.birth} {player.matchCount} {player.goalCount} {player.assistCount} {player.penaltyMinutes}\n");
+    }
 }
 else
 {
     bool Exit2 = true;
     while (Exit2)
     {
+        Console.Clear();
         Console.WriteLine("1-Вывести всех\n2-Выполнить задачу\n3-Сортировка по кол-ву матчей\n4-Поиск данных\n5-Выход");
         switch (int.Parse(Console.ReadLine()))
         {
@@ -495,35 +610,30 @@ else
             case 2:
                 {
                     var sortedPlayers = players.OrderByDescending(players => players.goalCount + players.assistCount);
-                    foreach (var player in sortedPlayers)
+                    int count = 0;
+                    foreach(var player in sortedPlayers)
                     {
-                        Console.WriteLine($"ФИО {player.name}\nДата рождения {player.birth}\nКол-во матчей {player.goalCount}\nКол-во передач {player.assistCount}\n");
-                        Console.WriteLine($"Кол-во штрафных минут {player.penaltyMinutes}\nКол-во голов {player.goalCount}\n");
-                        break;
+                        player.ShowPlayer();
+                        count++;
+                        if (count == 6) break;
                     }
                     break;
                 }
             case 3:
                 {
                     var sortedPlayers = players.OrderByDescending(players => players.goalCount);
-                    foreach (var player in sortedPlayers)
-                    {
-                        Console.WriteLine($"ФИО {player.name}\nДата рождения {player.birth}\nКол-во матчей {player.goalCount}\nКол-во передач {player.assistCount}\n");
-                        Console.WriteLine($"Кол-во штрафных минут {player.penaltyMinutes}\nКол-во голов {player.goalCount}\n");
-                    }
+                    ShowSortedData(sortedPlayers);
                     break;
                 }
             case 4:
                 {
                     Console.WriteLine($"Введите кол-во игр");
-                    int playerCount = int.Parse(Console.ReadLine());
-                
+                    int playerCount = int.Parse(Console.ReadLine());                
                     foreach (var player in players)
                     {
                         if (playerCount == player.matchCount)
                         {
-                            Console.WriteLine($"ФИО {player.name}\nДата рождения {player.birth}\nКол-во матчей {player.goalCount}\nКол-во передач {player.assistCount}\n");
-                            Console.WriteLine($"Кол-во штрафных минут {player.penaltyMinutes}\nКол-во голов {player.goalCount}\n");
+                            player.ShowPlayer();
                             break;
                         }
                     }
@@ -539,18 +649,104 @@ else
                 break;
         }
     }
-    File.WriteAllText(playerPath, "");
-    foreach (var player in players)
-    {
-        File.AppendAllText(playerPath, $"{player.name} {player.birth} {player.matchCount} {player.goalCount} {player.assistCount} {player.penaltyMinutes}\n");
-    }
+    
 }
 class Player
 {
-    public string? name;
-    public string? birth;
-    public int matchCount;
-    public int goalCount;
-    public int assistCount;
-    public int penaltyMinutes;
+    public string? name="Неизвестно";
+    public DateOnly birth = new DateOnly();
+    public int matchCount=0;
+    public int MatchCount {
+        
+       set
+        {
+            while (true)
+            {
+                value = int.Parse(Console.ReadLine());
+                if (value < 0)
+                    Console.WriteLine("Кол-во игр должно быть не меньше 0");
+                else
+                {
+                    matchCount = value;
+                    break;
+                }
+            }
+        }
+        get
+        {
+            return matchCount;
+        }
+    }
+    public int goalCount=0;
+    public int GoalCount
+    {
+
+        set
+        {
+            while (true)
+            {
+                value = int.Parse(Console.ReadLine());
+                if (value < 0)
+                    Console.WriteLine("Кол-во голов должно быть не меньше 0");
+                else
+                {
+                    goalCount = value;
+                    break;
+                }
+            }
+        }
+        get
+        {
+            return goalCount;
+        }
+    }
+    public int assistCount = 0;
+    public int AssistCount
+    {
+        set
+        {
+            while (true)
+            {
+                value = int.Parse(Console.ReadLine());
+                if (value < 0)
+                    Console.WriteLine("Кол-во передач должно быть не меньше 0");
+                else { 
+                assistCount = value;
+                break;
+            }
+        }
+        }
+        get
+        {
+            return assistCount;
+        }
+    }
+    public int penaltyMinutes = 0;
+    public int PenaltyMinutes
+    {
+        set
+        {
+            while (true)
+            {
+                value = int.Parse(Console.ReadLine());
+                if (value < 1)
+                    Console.WriteLine("Кол-во штрафных минут должно быть не меньше 0");
+                else
+                {
+                    penaltyMinutes = value;
+                    break;
+                }
+            }
+        }
+        get
+        {
+            return penaltyMinutes;
+        }
+    }
+    public void ShowPlayer()
+    {
+        Console.WriteLine($"==================================\nФИО {name}\nДата рождения {birth}\nКол-во матчей {goalCount}\nКол-во передач {assistCount}");
+        Console.WriteLine($"Кол-во штрафных минут {penaltyMinutes}\nКол-во голов {goalCount}\n==================================\n");
+    }
+    
 };
