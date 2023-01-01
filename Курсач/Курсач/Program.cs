@@ -92,7 +92,7 @@ static void ArrayResize(int AccountCount, ref string[,] OldArray,int mode )
         return;
     }
 }
-static bool Registration(string[,]? FormedData,int count)
+static bool Authorization(string[,]? FormedData,int count)
 {
     Console.WriteLine("Если вы зарегистрированы в базе нажмите 1");
     if (Console.ReadLine() == "1")
@@ -121,15 +121,33 @@ static bool Registration(string[,]? FormedData,int count)
             Console.WriteLine("В системе нет данного пользователя,попробуйте другой логин");
         }
     }
-    else
+    return Registration(FormedData,count);
+}
+static bool Registration(string[,]? FormedData, int count)
+{
+    while (true)
     {
-        Console.WriteLine("Для регистрации введите логин");
+        bool AlreadyHave = true;
         string? DataToFile;
-        DataToFile = Console.ReadLine() + ' ';
-        Console.WriteLine("Введите пароль");
-        DataToFile += HashPassword(Console.ReadLine()) + ' ' + 0 + '\n';
-        File.AppendAllText(autorizationPath, DataToFile);
-        return false;
+        Console.WriteLine("Для регистрации введите логин");
+        DataToFile=Console.ReadLine();
+        for (int i = 0; i < count; i++)
+        {
+            if (DataToFile == FormedData[i,0])
+            {
+                Console.WriteLine("Такой логин уже сущесвует в системе");
+                AlreadyHave=false;
+                break;
+            }
+        }
+        if(AlreadyHave)
+        {
+            DataToFile += ' ';
+            Console.WriteLine("Введите пароль");
+            DataToFile += HashPassword(Console.ReadLine()) + ' ' + 0 + '\n';
+            File.AppendAllText(autorizationPath, DataToFile);
+            return false;
+        }
     }
 }
 static void SetPlayerInfo(ref List<Player> players)
@@ -177,7 +195,7 @@ for (int i = 0,j=0; i < playerInfo.Length; i++)
         j = 0;
 }
 
-if (Registration(FormedData,AllInfo.Length))
+if (Authorization(FormedData,AllInfo.Length))
 {
     bool Exitt = true;
     while (Exitt)
@@ -189,6 +207,7 @@ if (Registration(FormedData,AllInfo.Length))
             case 1:
                 {
                     bool Exit=true;
+                    Console.Clear();
                     while (Exit)
                     {
                         Console.WriteLine("1-Просмотр все учетных записей\n2-Добавить учётную запись\n3-Отредактировать учётную запись\n4-Удалить учётную запись\n5-Выйти обратно");
@@ -196,11 +215,13 @@ if (Registration(FormedData,AllInfo.Length))
                         {
                             case 1:
                                 {
+                                    Console.Clear();
                                     ShowAccountInfo(FormedData, accountCount);
                                     break;
                                 }
                             case 2:
                                 {
+                                    Console.Clear();
                                     bool Exit1 = true;
                                     while (Exit1)
                                     {                                        
@@ -219,7 +240,7 @@ if (Registration(FormedData,AllInfo.Length))
                                                     accountCount++;
                                                     ArrayResize(accountCount, ref FormedData,-1);
                                                     FormedData[accountCount-1, 0] = Login;
-                                                    FormedData[accountCount-1, 1] = Passwd.GetHashCode().ToString();
+                                                    FormedData[accountCount-1, 1] = HashPassword(Passwd);
                                                     FormedData[accountCount-1, 2] = "0";
                                                     break;
                                                 }
@@ -237,12 +258,13 @@ if (Registration(FormedData,AllInfo.Length))
                                 }
                             case 3:
                                 {
-                                    bool Exit1=true;
+                                    Console.Clear();
+                                    bool Exit1 =true;
                                     while (Exit1)
                                     {
                                         ShowAccountInfo(FormedData, AllInfo.Length);
                                         Console.WriteLine("Введите номер учётной записи для редактирования");
-                                        int AccountNumber = Convert.ToInt32(Console.ReadLine());
+                                        int AccountNumber = Convert.ToInt32(Console.ReadLine())-1;
                                         Console.WriteLine("1-Изменить логин\n2-Изменить пароль\n3-Изменить права\n4-вернуться обратно");
                                         switch (Convert.ToInt32(Console.ReadLine()))
                                         {
@@ -255,7 +277,7 @@ if (Registration(FormedData,AllInfo.Length))
                                             case 2:
                                                 {
                                                     Console.WriteLine("Введите новый пароль: ");
-                                                    FormedData[AccountNumber, 1] = Console.ReadLine().GetHashCode().ToString();
+                                                    FormedData[AccountNumber, 1] = HashPassword(Console.ReadLine());
                                                     break;                                                    
                                                 }
                                             case 3:
@@ -279,6 +301,7 @@ if (Registration(FormedData,AllInfo.Length))
                                 }
                             case 4:
                                 {
+                                    Console.Clear();
                                     bool Exit1 = true;
                                     while (Exit1)
                                     {
@@ -290,6 +313,8 @@ if (Registration(FormedData,AllInfo.Length))
                                                     ShowAccountInfo(FormedData, accountCount);
                                                     Console.WriteLine("Выбирите учётную запись для удаления");
                                                     int AccountDelete=Convert.ToInt32(Console.ReadLine());
+                                                    Console.WriteLine("Вы точно хотите удалить учетную запись?\n1-Да\n2-Нет");
+                                                    if (Console.ReadLine() == "2") break;
                                                     ArrayResize(accountCount,ref FormedData,AccountDelete-1);
                                                     accountCount--;
                                                     string? DataToFile;
@@ -326,23 +351,27 @@ if (Registration(FormedData,AllInfo.Length))
                 };
             case 2:
                 {
+                    Console.Clear();
                     Console.WriteLine("1-Создать файл\n2-Открыть файл\n3-Удалить файл");
                     switch (int.Parse(Console.ReadLine()))
                     {
                         case 1:
                             {
+                                Console.Clear();
                                 Console.WriteLine("Введите название файл");
                                 File.Create(@$"E:\Курсач\Курсач\{Console.ReadLine()}.txt");
                                 break;
                             }
                         case 2:
                             {
+                                Console.Clear();
                                 Console.WriteLine("Введите имя файла:");
                                 File.Open(@$"E:\Курсач\Курсач\{Console.ReadLine()}.txt", FileMode.Open);
                                 break;
                             }
                         case 3:
                             {
+                                Console.Clear();
                                 Console.WriteLine("Введите имя файла:");
                                 File.Delete(@$"E:\Курсач\Курсач\{Console.ReadLine()}.txt");
                                 break;
@@ -365,11 +394,13 @@ if (Registration(FormedData,AllInfo.Length))
                         {
                             case 1:
                                 {
+                                    Console.Clear();
                                     ShowListInfo(players);
                                     break;
                                 }
                             case 2:
                                 {
+                                    Console.Clear();
                                     SetPlayerInfo(ref players);
                                     break;
                                 }
